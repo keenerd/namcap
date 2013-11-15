@@ -67,6 +67,9 @@ perllocal-pod-present %s :: perllocal.pod found in %s.
 pkgname-in-description :: Description should not contain the package name.
 potential-non-fhs-info-page %s :: Potential non-FHS info page (%s) found.
 potential-non-fhs-man-page %s :: Potential non-FHS man page (%s) found.
+py-mtime-mtree-warning :: Found .py file unoticeably newer than associated .pyc/pyo.
+py-mtime-tar-error :: Found .py file newer than associated .pyc/pyo.
+py-mtime-file-name %s :: Python script (%s) is newer than associated .pyc/pyo.
 script-link-detected %s in %s :: Script link detected (%s) in file %s
 scrollkeeper-dir-exists %s :: Scrollkeeper directory exists (%s). Remember to not run scrollkeeper till post_{install,upgrade,remove}.
 site-ruby :: Found usr/lib/ruby/site_ruby in package, usr/lib/ruby/vendor_ruby should be used instead.

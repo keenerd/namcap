@@ -20,6 +20,7 @@
 import os
 import re
 import stat
+import gzip
 
 def _read_carefully(path, readcall):
 	if not os.path.isfile(path):
@@ -76,5 +77,32 @@ def script_type(path):
 	return None
 
 clean_filename = lambda s: re.search(r"/tmp/namcap\.[0-9]*/(.*)", s).group(1)
+
+def _mtree_line(line):
+	"returns head, {key:value}"
+	# todo, un-hex the escaped chars
+	head,_,kvs = line.partition(' ')
+	kvs = dict(kv.split('=') for kv in kvs.split(' '))
+	return head, kvs
+
+def load_mtree(tar):
+	"takes a tar object, returns (path, {attributes})"
+	if '.MTREE' not in tar.getnames():
+		raise StopIteration
+	zfile = tar.extractfile('.MTREE')
+	text = gzip.open(zfile).read().decode("utf-8")
+	defaults = {}
+	for line in text.split('\n'):
+		if not line:
+			continue
+		if line.startswith('#'):
+			continue
+		head, kvs = _mtree_line(line)
+		if head == '/set':
+			defaults = kvs
+		attr = {}
+		attr.update(defaults)
+		attr.update(kvs)
+		yield head, attr
 
 # vim: set ts=4 sw=4 noet:

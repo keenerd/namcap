@@ -42,6 +42,7 @@ from . import (
   missingbackups,
   perllocal,
   permissions,
+  py_mtime,
   rpath,
   scrollkeeper,
   shebangdepends,
