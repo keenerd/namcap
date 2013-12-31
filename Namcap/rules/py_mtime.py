@@ -50,7 +50,7 @@ def _generic_timestamps(tar):
 	"works for mtree and tar"
 	if '.MTREE' in tar.getnames():
 		return _mtree_timestamps(tar)
-	return timestamps(tar)
+	return _tar_timestamps(tar)
 
 def _try_mtree(tar):
 	"returns True if good, False if bad, None if N/A"
@@ -69,26 +69,47 @@ def _try_tar(tar):
 	mtimes = _tar_timestamps(tar)
 	return not _mtime_filter(mtimes)
 
-def _three_cache(path):
-	"returns the py3 cache location"
-	d,f = os.path.split(path)
-	return os.path.join(d, '__pycache__', f)
+def _split_all(path):
+	"like os.path.split but splits every directory"
+	p2 = path
+	dirs = []
+	while p2 and p2 != '/':
+		p2,p3 = os.path.split(p2)
+		dirs.insert(0, p3)
+	#dirs.insert(0, '/')
+	return dirs
+
+def _source_py(path):
+	"given a pyc/pyo, return the source path"
+	if not path.endswith('.pyc') and not path.endswith('.pyo'):
+		return None
+	path = path[:-1]
+	# handle py2
+	if '__pycache__' not in path:
+		return path
+	# handle py3
+	splitup = _split_all(path)
+	if splitup[-2] != '__pycache__':
+		return None
+	splitup.pop(-2)
+	f = splitup[-1]
+	f = f.split('.')
+	f.pop(-2)
+	splitup[-1] = '.'.join(f)
+	return os.path.join(*splitup)
 
 def _mtime_filter(mtimes):
 	"return list of bad py file names"
 	bad = []
-	for name, mt1 in mtimes.items():
-		if not name.endswith('.py'):
+	for name, mt2 in mtimes.items():
+		if not name.endswith('.pyc') and not name.endswith('.pyo'):
 			continue
-		name3 = _three_cache(name)
-		variants = [name+'c', name+'o', name3+'c', name3+'o']
-		for v in variants:
-			if v not in mtimes:
-				continue
-			mt2 = mtimes[v]
-			if mt1 > mt2:
-				bad.append(name)
-				break
+		source_name = _source_py(name)
+		if source_name not in mtimes:
+			continue
+		mt1 = mtimes[source_name]
+		if mt1 > mt2:
+			bad.append(source_name)
 	return bad
 
 class package(TarballRule):
